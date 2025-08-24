@@ -1,0 +1,19 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17-trixie
+    container_name: memories-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: memories
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  
+
+volumes:
+  db_data:
