@@ -38,10 +38,12 @@ type JWTConfig struct {
 }
 
 type StorageConfig struct {
-    AWSRegion    string
-    AWSBucket    string
-    AWSAccessKey string
-    AWSSecretKey string
+    AWSRegion       string
+    AWSBucket       string
+    AWSAccessKey    string
+    AWSSecretKey    string
+    EndpointURL     string 
+    ForcePathStyle  bool  
 }
 
 type LoggerConfig struct {
@@ -75,6 +77,8 @@ func LoadConfig() (*Config, error) {
             AWSBucket:    getEnv("AWS_BUCKET", "ai-photos-storage"),
             AWSAccessKey: getEnv("AWS_ACCESS_KEY_ID", ""),
             AWSSecretKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
+            EndpointURL:     getEnv("AWS_ENDPOINT_URL", ""),
+            ForcePathStyle:  getBoolEnv("AWS_FORCE_PATH_STYLE", false),
         },
         Logger: LoggerConfig{
             Level: getEnv("LOG_LEVEL", "info"),
