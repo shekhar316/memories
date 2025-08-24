@@ -31,6 +31,8 @@ func main() {
 
     logger.Sugar.Info("Starting Memories Service...")
 
+
+    ctx := context.Background()
     // Initialize database
     db, err := cfg.InitializeDatabase()
     if err != nil {
@@ -42,12 +44,22 @@ func main() {
         }
     }()
 
+    s3Storage, err := cfg.InitializeS3Storage(ctx)
+    if err != nil {
+        logger.Sugar.Fatalf("Failed to initialize S3 storage: %v", err)
+    }
+    defer func() {
+        if err := s3Storage.Close(); err != nil {
+            logger.Sugar.Errorw("Failed to close S3 storage", "error", err)
+        }
+    }()
+
     // Set Gin mode
     gin.SetMode(cfg.Server.Mode)
 
     // Initialize Gin router
     router := gin.New()
-	routes.SetupRoutes(router, db)
+	routes.SetupRoutes(router, db, s3Storage)
 
     // Create HTTP server
     server := &http.Server{

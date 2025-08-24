@@ -7,16 +7,19 @@ import (
     "github.com/gin-gonic/gin"
     "github.com/shekhar316/memories/internal/utils"
     "github.com/shekhar316/memories/pkg/database"
+    "github.com/shekhar316/memories/pkg/storage"
 )
 
 
 type HealthHandler struct {
     db *database.Database
+    s3Storage *storage.S3Storage
 }
 
-func NewHealthHandler(db *database.Database) *HealthHandler {
+func NewHealthHandler(db *database.Database, storage *storage.S3Storage) *HealthHandler {
     return &HealthHandler{
         db: db,
+        s3Storage: storage,
     }
 }
 
@@ -27,6 +30,7 @@ type HealthResponse struct {
     Version   string    `json:"version"`
     Uptime    string    `json:"uptime"`
     Database  map[string]interface{} `json:"database,omitempty"`
+    Storage   map[string]interface{} `json:"storage,omitempty"`
 }
 
 var startTime = time.Now()
@@ -52,6 +56,7 @@ func (h *HealthHandler) ReadinessCheck(c *gin.Context) {
     statusCode := http.StatusOK
     
     dbStatus := make(map[string]interface{})
+    storageStatus := make(map[string]interface{})
     
     // Check database connection
     if h.db != nil {
@@ -70,6 +75,24 @@ func (h *HealthHandler) ReadinessCheck(c *gin.Context) {
         statusCode = http.StatusServiceUnavailable
     }
 
+
+    if h.s3Storage != nil {
+        if err := h.s3Storage.TestConnection(c.Request.Context()); err != nil {
+            storageStatus["status"] = "disconnected"
+            storageStatus["error"] = err.Error()
+            status = "not ready"
+            statusCode = http.StatusServiceUnavailable
+        } else {
+            storageStatus["status"] = "connected"
+            storageStatus["stats"] = h.s3Storage.GetStats(c.Request.Context())
+        }
+    } else {
+        storageStatus["status"] = "not initialized"
+        status = "not ready"
+        statusCode = http.StatusServiceUnavailable
+    }
+
+
     healthData := HealthResponse{
         Status:    status,
         Timestamp: time.Now(),
@@ -77,10 +100,8 @@ func (h *HealthHandler) ReadinessCheck(c *gin.Context) {
         Version:   "1.0.0",
         Uptime:    uptime.String(),
         Database:  dbStatus,
+        Storage:   storageStatus,
     }
-
-    // TODO: Implement storage check
-
     
     utils.SuccessResponse(c, statusCode, "Service readiness check.", healthData)
 }
