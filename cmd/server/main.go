@@ -31,12 +31,23 @@ func main() {
 
     logger.Sugar.Info("Starting Memories Service...")
 
+    // Initialize database
+    db, err := cfg.InitializeDatabase()
+    if err != nil {
+        logger.Sugar.Fatalf("Failed to initialize database: %v", err)
+    }
+    defer func() {
+        if err := db.Close(); err != nil {
+            logger.Sugar.Errorw("Failed to close database connection", "error", err)
+        }
+    }()
+
     // Set Gin mode
     gin.SetMode(cfg.Server.Mode)
 
     // Initialize Gin router
     router := gin.New()
-	routes.SetupRoutes(router)
+	routes.SetupRoutes(router, db)
 
     // Create HTTP server
     server := &http.Server{
