@@ -29,6 +29,7 @@ type DatabaseConfig struct {
     Password string
     DBName   string
     SSLMode  string
+    AutoMigrate bool
 }
 
 type JWTConfig struct {
@@ -62,6 +63,8 @@ func LoadConfig() (*Config, error) {
             User:     getEnv("DB_USER", "postgres"),
             Password: getEnv("DB_PASSWORD", ""),
             DBName:   getEnv("DB_NAME", ""),
+            SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+            AutoMigrate: getBoolEnv("DB_AUTOMIGRATE", false),
         },
         JWT: JWTConfig{
             Secret: getEnv("JWT_SECRET", ""),

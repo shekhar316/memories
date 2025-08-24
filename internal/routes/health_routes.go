@@ -11,5 +11,6 @@ func setupHealthRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler
     v1 := router.Group("/api/v1")
     {
         v1.GET("/health", healthHandler.HealthCheck)
+        v1.GET("/readiness", healthHandler.ReadinessCheck)
     }
 }
